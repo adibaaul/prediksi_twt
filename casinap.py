@@ -155,115 +155,113 @@ def encoding(df_ml):
 #3. KOMPONEN UNGGAH FILE
 #==========================================
 
-if "tombol_aktif" not in st.session_state:
-  st.session_state["tombol_aktif"] = None
-
 uploaded_file = st.file_uploader(
     "Unggah file DATASET Bongkaran", type=["xlsx", "csv"]
 )
 
 if uploaded_file is not None:
-  if uploaded_file.name.endswith(".xlsx"):
-    df = pd.read_excel(uploaded_file)
-  else:
-    df = pd.read_csv(uploaded_file)
+    if uploaded_file.name.endswith(".xlsx"):
+        df = pd.read_excel(uploaded_file)
+    else:
+        df = pd.read_csv(uploaded_file)
 
-  st.subheader("Preview Data Bongkaran")
-  st.dataframe(df)
+    st.subheader("Preview Data Bongkaran")
+    st.dataframe(df)
 
-  # 1. Simpan Dataset Awal ke Database (tabel data_baru)
-  if st.button("Simpan Dataset ke DB (data_baru)"):
-    try:
-      df_save = df.copy()
-      if "TANGGAL MASUK" in df_save.columns:
-        df_save["TANGGAL MASUK"] = pd.to_datetime(
-            df_save["TANGGAL MASUK"]
-        ).dt.strftime("%Y-%m-%d")
+    # 1. Simpan Dataset Awal ke Database (tabel data_baru)
+    if st.button("Simpan Dataset ke DB (data_baru)"):
+        try:
+            df_save = df.copy()
+            if "TANGGAL MASUK" in df_save.columns:
+                df_save["TANGGAL MASUK"] = pd.to_datetime(
+                    df_save["TANGGAL MASUK"], errors='coerce'
+                ).dt.strftime("%Y-%m-%d")
 
-      df_save.columns = (
-          df_save.columns.str.strip().str.lower().str.replace(" ", "_")
-      )
+            df_save.columns = (
+                df_save.columns.str.strip().str.lower().str.replace(" ", "_")
+            )
 
-      mydb = koneksi()
-      cursor = mydb.cursor()
-      kolom = ", ".join(df_save.columns)
-      nilai = ", ".join(["%s"] * len(df_save.columns))
+            # Konversi NaN ke None murni Python agar aman
+            data_to_insert = [
+                tuple(None if pd.isna(val) else val for val in row)
+                for row in df_save.itertuples(index=False)
+            ]
 
-      query = f"INSERT INTO data_baru ({kolom}) VALUES ({nilai})"
-      cursor.executemany(query, df_save.values.tolist())
-      mydb.commit()
-      st.success("✅ Data berhasil disimpan ke tabel data_baru!")
-    except Exception as e:
-      st.error(f"❌ Terjadi kesalahan saat menyimpan data: {e}")
-    finally:
-      if "cursor" in locals():
-        cursor.close()
-      if "mydb" in locals():
-        mydb.close()
+            mydb = koneksi()
+            cursor = mydb.cursor()
+            kolom = ", ".join([f"`{col}`" for col in df_save.columns])
+            nilai = ", ".join(["%s"] * len(df_save.columns))
 
-  # Preprocessing & Encoding Data
-  df_preprocessed, id_prediksi = preprocess_data(df)
-  df_encoded = encoding(df_preprocessed)
+            query = f"INSERT INTO data_baru ({kolom}) VALUES ({nilai})"
+            cursor.executemany(query, data_to_insert)
+            mydb.commit()
+            st.success("✅ Data berhasil disimpan ke tabel data_baru!")
+        except Exception as e:
+            st.error(f"❌ Terjadi kesalahan saat menyimpan data: {e}")
+        finally:
+            if "cursor" in locals():
+                cursor.close()
+            if "mydb" in locals():
+                mydb.close()
 
-  st.session_state.encoded_df = df_encoded
-  st.session_state.id_prediksi = id_prediksi
+    st.write("---")
+    
+    # -------------------------------------------------------------
+    # TOMBOL EKSPLISIT UNTUK MEMULAI PREDIKSI
+    # (Preprocessing HANYA berjalan jika tombol ini diklik)
+    # -------------------------------------------------------------
+    if st.button("🚀 Jalankan Prediksi Random Forest", use_container_width=True):
+        with st.spinner("Memproses data & melakukan prediksi..."):
+            # Preprocessing & Encoding baru dipanggil di SINI:
+            df_preprocessed, id_prediksi = preprocess_data(df)
+            df_encoded = encoding(df_preprocessed)
 
-  st.write("---")
-  st.write("**Prediksi (Random Forest):**")
+            # Reindex fitur
+            X_test = df_encoded.reindex(columns=kolom_fitur, fill_value=0)
+            y_pred = model_rf.predict(X_test)
 
-  col1, col2 = st.columns(2)
-  with col1:
-    if st.button("Random Forest", use_container_width=True):
-      st.session_state["tombol_aktif"] = "rf_regresi"
-  st.write("---")
+            # Buat dataframe hasil prediksi
+            df_preprocessed["durasi_1_prediksi"] = y_pred
 
-  # ==========================================
-  # 5. HASIL PREDIKSI & SIMPAN RIWAYAT
-  # ==========================================
+            # Hitung Biaya Cas Inap
+            trucking_val = pd.to_numeric(
+                df_preprocessed.get("trucking", 0), errors="coerce"
+            ).fillna(0)
+            
+            kondisi = [
+                (df_preprocessed["durasi_1_prediksi"] >= 72),
+                (df_preprocessed["durasi_1_prediksi"] >= 48),
+                (df_preprocessed["durasi_1_prediksi"] >= 24),
+            ]
+            pilihan_pengali = [
+                trucking_val * 2.0,
+                trucking_val * 1.0,
+                trucking_val * 0.5,
+            ]
+            df_preprocessed["Prediksi Biaya Cas Inap"] = np.select(
+                kondisi, pilihan_pengali, default=0
+            )
 
-  # B. PREDIKSI RANDOM FOREST
-  if st.session_state["tombol_aktif"] == "rf_regresi":
-    with st.spinner("Melakukan prediksi dengan Random Forest..."):
-      # Reindex fitur
-      X_test = st.session_state.encoded_df.reindex(
-          columns=kolom_fitur, fill_value=0
-      )
-      y_pred = model_rf.predict(X_test)
+            if "durasi_1_aktual" in df_preprocessed.columns:
+                df_preprocessed["selisih"] = (
+                    df_preprocessed["durasi_1_aktual"]
+                    - df_preprocessed["durasi_1_prediksi"]
+                )
 
-      # Buat dataframe hasil
-      df_preprocessed["durasi_1_prediksi"] = y_pred
+            # Simpan hasil sementara ke session_state agar tampil di layar
+            st.session_state["df_hasil_prediksi"] = df_preprocessed
 
-      # Hitung Cas Inap
-      trucking_val = pd.to_numeric(
-          df_preprocessed.get("trucking", 0), errors="coerce"
-      ).fillna(0)
-      kondisi = [
-          (df_preprocessed["durasi_1_prediksi"] >= 72),
-          (df_preprocessed["durasi_1_prediksi"] >= 48),
-          (df_preprocessed["durasi_1_prediksi"] >= 24),
-      ]
-      pilihan_pengali = [
-          trucking_val * 2.0,
-          trucking_val * 1.0,
-          trucking_val * 0.5,
-      ]
-      df_preprocessed["Prediksi Biaya Cas Inap"] = np.select(
-          kondisi, pilihan_pengali, default=0
-      )
+    # -------------------------------------------------------------
+    # TAMPILKAN HASIL PREDIKSI & TOMBOL SIMPAN KE RIWAYAT
+    # -------------------------------------------------------------
+    if "df_hasil_prediksi" in st.session_state:
+        st.subheader("Hasil Prediksi Random Forest")
+        st.dataframe(st.session_state["df_hasil_prediksi"])
 
-      # Hitung selisih jika ada durasi aktual
-      if "durasi_1_aktual" in df_preprocessed.columns:
-        df_preprocessed["selisih"] = (
-            df_preprocessed["durasi_1_aktual"]
-            - df_preprocessed["durasi_1_prediksi"]
-        )
-
-      st.subheader("Hasil Prediksi Random Forest")
-      st.dataframe(df_preprocessed)
-
-      # Simpan Hasil ke Tabel Riwayat
-      simpan_riwayat_ke_db(
-          df_preprocessed,
-          kolom_durasi_pred="durasi_1_prediksi",
-          kolom_biaya_casinap="Prediksi Biaya Cas Inap",
-      )
+        # Tombol simpan berdiri sendiri dan TIDAK akan auto-save
+        if st.button("💾 Simpan Hasil Ini ke Tabel Riwayat", type="primary"):
+            simpan_riwayat_ke_db(
+                st.session_state["df_hasil_prediksi"],
+                kolom_durasi_pred="durasi_1_prediksi",
+                kolom_biaya_casinap="Prediksi Biaya Cas Inap",
+            )
