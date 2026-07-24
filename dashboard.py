@@ -27,13 +27,13 @@ with col1:
 
 with col2:
     with st.container(border=True):
-        st.metric("🧠 Training", jumlah_training)
+        st.metric("🧠 Data Baru", jumlah_training)
 
 col3, col4 = st.columns(2)
 
 with col3:
     with st.container(border=True):
-        st.metric("🧪 Testing", jumlah_testing)
+        st.metric("🧪 Riwayat Prediksi", jumlah_testing)
 
 with col4:
     with st.container(border=True):
