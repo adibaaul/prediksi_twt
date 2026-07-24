@@ -22,6 +22,9 @@ if uploaded_file is not None:
                             .str.strip()
                             .str.lower()
                             .str.replace(" ", "_"))
+
+            df_clean = df.where(pd.notnull(df), None)
+            
             kolom = ", ".join([f"`{col}`" for col in df_clean.columns])
             nilai = ", ".join(["%s"] * len(df_clean.columns))
     
