@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from koneksi import koneksi
 
 mydb = koneksi()
@@ -37,3 +38,30 @@ with col3:
 with col4:
     with st.container(border=True):
         st.metric("📈 Model", "KNN, Random Forest")
+
+data = {
+    'OWNER' : ['A', 'B', 'C'],
+    'CUSTOMER': ['A', 'B', 'C'],
+    'LOKASI': ['Jakarta', 'Bandung', 'Surabaya'],
+    'NO CONTAINER': ['ABC123', 'DEF456', 'GHI789'],
+    'TIPE CONTAINER': ['20', '40', '20'],
+    'BARANG': ['jagung', 'beras', 'gula'],
+    'VENDOR': ['X', 'Y', 'Z'],
+    'TANGGAL': ['2024-01-01', '2024-02-01', '2024-03-01'],
+    'SHIFT' : ['1', '1,', '2'],
+    'TRUCKING': [1000, 2000, 1500]
+}
+
+
+df = pd.DataFrame(data)
+
+st.write("Selamat Datang!")
+st.write("File CSV yang diunggah harus memiliki format seperti tabel di bawah ini. Pastikan kolom-kolomnya sesuai dengan contoh agar prediksi dapat dilakukan dengan benar.")
+
+st.write("Contoh Format File CSV")
+st.dataframe(df)
+
+st.write("Catatan penting:")
+st.write("1. File bisa berformat CSV atau EXCEL")
+st.write("2. Pastikan semua kolom-kolom yang sesuai dengan contoh di atas")
+st.write("3. Format Tanggal harus YY/MM/DD")
