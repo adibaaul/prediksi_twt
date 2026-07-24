@@ -15,16 +15,14 @@ st.write("Silahkan input file CSV")
 
 @st.cache_resource
 def load_model():
-    with open('model_knn.pkl', 'rb') as f:
-        model_knn = pickle.load(f)
     with open('model_rf.pkl', 'rb') as f:
         model_rf = pickle.load(f)
     with open('kolom_fitur.pkl', 'rb') as f:
         kolom_fitur = pickle.load(f)
-    return model_knn, model_rf, kolom_fitur
+    return model_rf, kolom_fitur
 
 try:
-    model_knn, model_rf, kolom_fitur = load_model()
+    model_rf, kolom_fitur = load_model()
 except FileNotFoundError:
     st.error("KACAWWWWWWWWWWW")
     st.stop()
@@ -102,9 +100,6 @@ if file_terinput is not None:
     col1, col2 = st.columns(2)
 
     with col1:
-        if st.button("K-Nearest Neighbor", use_container_width=True):
-            st.session_state['tombol_aktif'] = "knn_regresi"
-    with col2:
         if st.button("Random Forest", use_container_width=True):
             st.session_state['tombol_aktif'] = "rf_regresi"
     st.write("---")
@@ -112,27 +107,8 @@ if file_terinput is not None:
 # ==========================================
 # 4. HASIL TAMPILAN
 # ==========================================
-    if st.session_state['tombol_aktif'] == "knn_regresi":
-        with st.spinner("Menghitung Menggunakan KNN Regresi..."):
-            df_asal, X_data = proses_encoded(file_terinput)
-            pred = model_knn.predict(X_data)
-            df_asal['TWT'] = pred
-            kondisi = [
-                (df_asal['TWT']>=72),
-                (df_asal['TWT']>=48),
-                (df_asal['TWT']>=24)
-            ]
-            pilihan_pengali = [
-                df_asal['TRUCKING'] * 2.0,
-                df_asal['TRUCKING'] * 1,
-                df_asal['TRUCKING'] * 0.5
-            ]
-            df_asal['Prediksi Biaya Cas Inap'] = np.select(kondisi, pilihan_pengali, default=0)
-
-            st.subheader("Tabel Hasil Prediksi Kargo (K-Nearest Neighbor)")
-            st.dataframe(df_asal, use_container_width=True)
-        
-    elif st.session_state['tombol_aktif'] == "rf_regresi":
+    
+    if st.session_state['tombol_aktif'] == "rf_regresi":
         with st.spinner("Menghitung Menggunakan Random Forest Regresi..."):
             df_asal, X_data = proses_encoded(file_terinput)
             pred = model_rf.predict(X_data)
