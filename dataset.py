@@ -25,6 +25,8 @@ if uploaded_file is not None:
             kolom = ", ".join(df.columns)
             nilai = ", ".join(["%s"] * len(df.columns))
 
+            df_clean = df.where(pd.notnull(df), None)
+            
             query = f"INSERT INTO dataset ({kolom}) VALUES ({nilai})"
             cursor.executemany(query, df.values.tolist())   
 
