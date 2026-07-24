@@ -76,6 +76,22 @@ def simpan_riwayat_ke_db(df_hasil, kolom_durasi_pred, kolom_biaya_casinap):
 #2. PROSES PROCESSING DATA
 ####################################
 
+def get_max_id_prediksi():
+    try:
+        mydb = koneksi()
+        cursor = mydb.cursor()
+        cursor.execute("SELECT MAX(id_prediksi) FROM riwayat")
+        result = cursor.fetchone()
+        max_id = result[0] if result[0] is not None else 0
+        return max_id
+    except Exception as e:
+        return 0
+    finally:
+        if "cursor" in locals():
+            cursor.close()
+        if "mydb" in locals():
+            mydb.close()
+            
 def preprocess_data(df):
   # Buat copy agar tidak mengubah dataframe asli secara tak sengaja
   df_ml = df.copy()
@@ -90,11 +106,17 @@ def preprocess_data(df):
     df_ml = df_ml.dropna(subset=["trucking", "vendor"])
 
   # Ambil id_prediksi jika ada
-  id_prediksi = (
-      df_ml["id_prediksi"]
-      if "id_prediksi" in df_ml.columns
-      else df_ml.index + 1
-  )
+  if "id_prediksi" in df_ml.columns:
+        id_prediksi = df_ml["id_prediksi"]
+    else:
+        # Ambil ID terakhir di database (misal: 9)
+        last_id = get_max_id_prediksi()
+        
+        # Buat urutan baru melanjutkan last_id (misal: 10, 11, 12, dst.)
+        id_prediksi = pd.Series(range(last_id + 1, last_id + 1 + len(df_ml)))
+        
+        # Simpan ke dataframe agar terikat ke setiap baris
+        df_ml["id_prediksi"] = id_prediksi
 
   # Hapus spasi & ubah ke lowercase
   if "customer" in df_ml.columns:
