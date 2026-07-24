@@ -106,9 +106,9 @@ def preprocess_data(df):
     df_ml = df_ml.dropna(subset=["trucking", "vendor"])
 
   # Ambil id_prediksi jika ada
-      if "id_prediksi" in df_ml.columns:
+    if "id_prediksi" in df_ml.columns:
         id_prediksi = df_ml["id_prediksi"]
-      else:
+    else:
         # Ambil ID terakhir di database (misal: 9)
         last_id = get_max_id_prediksi()
         
