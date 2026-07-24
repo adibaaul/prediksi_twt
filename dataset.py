@@ -22,14 +22,14 @@ if uploaded_file is not None:
                             .str.strip()
                             .str.lower()
                             .str.replace(" ", "_"))
-            kolom = ", ".join(df.columns)
-            nilai = ", ".join(["%s"] * len(df.columns))
-
-            df_clean = df.where(pd.notnull(df), None)
-            
+            kolom = ", ".join([f"`{col}`" for col in df_clean.columns])
+            nilai = ", ".join(["%s"] * len(df_clean.columns))
+    
             query = f"INSERT INTO dataset ({kolom}) VALUES ({nilai})"
-            cursor.executemany(query, df.values.tolist())   
-
+            
+            # 6. Eksekusi simpan banyak data sekaligus
+            cursor.executemany(query, df_clean.values.tolist())
+            
             mydb.commit()
             st.success("Data berhasil disimpan ke database!")
         except Exception as e:  
