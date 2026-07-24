@@ -209,13 +209,10 @@ if uploaded_file is not None:
   st.session_state.id_prediksi = id_prediksi
 
   st.write("---")
-  st.write("**Pilih Algoritma Prediksi:**")
+  st.write("**Prediksi (Random Forest):**")
 
   col1, col2 = st.columns(2)
   with col1:
-    if st.button("K-Nearest Neighbor", use_container_width=True):
-      st.session_state["tombol_aktif"] = "knn_regresi"
-  with col2:
     if st.button("Random Forest", use_container_width=True):
       st.session_state["tombol_aktif"] = "rf_regresi"
   st.write("---")
