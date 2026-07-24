@@ -7,10 +7,10 @@ cursor = mydb.cursor()
 cursor.execute("SELECT  COUNT(*) FROM dataset")
 jumlah_dataset = cursor.fetchone()[0]
 
-cursor.execute("SELECT  COUNT(*) FROM training")
+cursor.execute("SELECT  COUNT(*) FROM data_baru")
 jumlah_training = cursor.fetchone()[0]
 
-cursor.execute("SELECT  COUNT(*)     FROM testing")
+cursor.execute("SELECT  COUNT(*)     FROM riwayat")
 jumlah_testing = cursor.fetchone()[0]
 
 
