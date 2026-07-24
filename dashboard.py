@@ -66,5 +66,3 @@ st.write("1. File bisa berformat CSV atau EXCEL")
 st.write("2. Pastikan semua kolom-kolom yang sesuai dengan contoh di atas")
 st.write("3. Format Tanggal harus YY/MM/DD")
 
-for i in range(51):
-    st.write(f"angka ke-{i}")
