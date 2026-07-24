@@ -41,7 +41,8 @@ else:
     halaman_tes = st.Page("casinap.py", title="Prediksi", icon="📊")
     halaman_training = st.Page("training.py", title="Training Model", icon="🧠")
     halaman_testing = st.Page("evaluasi.py", title="Testing Model", icon="🧪")
+    halaman_riwayat = st.Page("riwayat.py", title="Riwayat Prediksi", icon="🎯")
 
 
-    pg = st.navigation([halaman_project, halaman_dataset, halaman_training, halaman_testing, halaman_tes])
+    pg = st.navigation([halaman_project, halaman_dataset, halaman_training, halaman_testing, halaman_tes, halaman_riwayat])
     pg.run()
