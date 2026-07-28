@@ -13,7 +13,8 @@ cursor = mydb.cursor()
 cursor.execute("SELECT  COUNT(*) FROM dataset")
 jumlah_dataset = cursor.fetchone()[0]
 
-
+querrry = """SELECT d.* FROM testing t JOIN dataset d ON t.id_dataset = d.id_dataset"""
+df_train = pd.read_sql(querrry, koneksi())
 
 col1, col2 = st.columns(2)
 
@@ -92,8 +93,6 @@ if st.session_state['tombol_aktif'] == "preprocessing":
     st.success("Data Preprocessing selesai!")
     
 elif st.session_state['tombol_aktif'] == "preprocessing":
-    querrry = """SELECT d.* FROM testing t JOIN dataset d ON t.id_dataset = d.id_dataset"""
-    df_train = pd.read_sql(querrry, koneksi())
     st.subheader("Data Training")
     st.dataframe(df_train)
 
