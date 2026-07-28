@@ -13,6 +13,8 @@ cursor = mydb.cursor()
 cursor.execute("SELECT  COUNT(*) FROM dataset")
 jumlah_dataset = cursor.fetchone()[0]
 
+
+
 col1, col2 = st.columns(2)
 
 col1.metric("📂 Dataset", jumlah_dataset)
@@ -64,7 +66,17 @@ def encoding(df_ml):
                             prefix=['customer', 'barang'], dtype=int)
     return df_encoded
 
-if st.button("Preprocessing Data"):
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("Preprocessing Data", use_container_width=True):
+        st.session_state['tombol_aktif'] = "preprocessing"
+with col2:
+    if st.button("Data Training", use_container_width=True):
+        st.session_state['tombol_aktif'] = "trainig"
+st.write("---")
+
+if st.session_state['tombol_aktif'] == "preprocessing":
     st.write("Data Preprocessing sedang dilakukan...")
     # Lakukan preprocessing data di sini
     df_preprocessed, id_dataset, bulan_panen = preprocess_data(df)
@@ -78,6 +90,12 @@ if st.button("Preprocessing Data"):
 
     st.dataframe(df_encoded)
     st.success("Data Preprocessing selesai!")
+    
+elif st.session_state['tombol_aktif'] == "preprocessing":
+    querrry = """SELECT d.* FROM testing t JOIN dataset d ON t.id_dataset = d.id_dataset"""
+    df_train = pd.read_sql(querrry, koneksi())
+    st.subheader("Data Training")
+    st.dataframe(df_train)
 
 if st.session_state.get("pre_done", False):
     if st.button("SPLIT DATASET"):
