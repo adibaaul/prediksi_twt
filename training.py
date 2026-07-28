@@ -74,7 +74,7 @@ with col1:
         st.session_state['tombol_aktif'] = "preprocessing"
 with col2:
     if st.button("Data Training", use_container_width=True):
-        st.session_state['tombol_aktif'] = "trainig"
+        st.session_state['tombol_aktif'] = "training"
 st.write("---")
 
 if st.session_state['tombol_aktif'] == "preprocessing":
@@ -92,7 +92,7 @@ if st.session_state['tombol_aktif'] == "preprocessing":
     st.dataframe(df_encoded)
     st.success("Data Preprocessing selesai!")
     
-elif st.session_state['tombol_aktif'] == "preprocessing":
+elif st.session_state['tombol_aktif'] == "training":
     st.subheader("Data Training")
     st.dataframe(df_train)
 
